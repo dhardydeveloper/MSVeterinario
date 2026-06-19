@@ -465,6 +465,10 @@ class RegistroControllerTest {
         when(registroService.actualizarMascota(eq(99), any(Mascota.class)))
                 .thenThrow(new RuntimeException("Mascota no encontrada con id: 99"));
 
+                /**simula una petición HTTP real sin necesidad de levantar todo el servidor
+                 *  de aplicaciones. En este caso, simula una petición de tipo PUT a la 
+                 * URL /api/v1/registros/mascotas/99. */
+                 
         mockMvc.perform(put("/api/v1/registros/mascotas/99")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mascota)))

@@ -1,0 +1,106 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+          routes:
+            - id: usuario-usuarios
+              uri: lb://usuario
+              predicates:
+                - Path=/api/v1/usuarios/**
+
+            - id: usuario-roles
+              uri: lb://usuario
+              predicates:
+                - Path=/api/v1/roles/**
+
+            - id: veterinario-veterinarios
+              uri: lb://veterinario
+              predicates:
+                - Path=/api/v1/veterinarios/**
+
+            - id: veterinario-especialidades
+              uri: lb://veterinario
+              predicates:
+                - Path=/api/v1/especialidades/**
+
+            - id: registro-registros
+              uri: lb://registro
+              predicates:
+                - Path=/api/v1/registros/**
+
+            - id: pago-pagos
+              uri: lb://pago
+              predicates:
+                - Path=/api/v1/pagos/**
+
+            - id: pago-tipopagos
+              uri: lb://pago
+              predicates:
+                - Path=/api/v1/tipo-pagos/**
+
+            - id: fichaclinica-fichas
+              uri: lb://fichaclinica
+              predicates:
+                - Path=/api/v1/fichas-clinicas/**
+
+            - id: fichaclinica-medicamentos
+              uri: lb://fichaclinica
+              predicates:
+                - Path=/api/v1/medicamentos/**
+
+            - id: fichaclinica-recetas
+              uri: lb://fichaclinica
+              predicates:
+                - Path=/api/v1/recetas/**
+
+            - id: examenes-ordenes
+              uri: lb://examenes
+              predicates:
+                - Path=/api/v1/ordenes-examen/**
+
+            - id: examenes-resultados
+              uri: lb://examenes
+              predicates:
+                - Path=/api/v1/resultados-examen/**
+
+            - id: examenes-tipos
+              uri: lb://examenes
+              predicates:
+                - Path=/api/v1/tipo-examenes/**
+
+            - id: atencion-atenciones
+              uri: lb://atencionclinica
+              predicates:
+                - Path=/api/v1/atenciones/**
+
+            - id: atencion-boxes
+              uri: lb://atencionclinica
+              predicates:
+                - Path=/api/v1/boxes/**
+
+            - id: atencion-tipos
+              uri: lb://atencionclinica
+              predicates:
+                - Path=/api/v1/tipo-atenciones/**
+
+            - id: agenda-agendas
+              uri: lb://agenda
+              predicates:
+                - Path=/api/v1/agendas/**
+
+            - id: agenda-citas
+              uri: lb://agenda
+              predicates:
+                - Path=/api/v1/citas/**

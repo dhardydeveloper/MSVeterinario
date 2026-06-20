@@ -1,0 +1,224 @@
+package cl.duoc.examenes.Controller;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import cl.duoc.examenes.controller.OrdenExamenController;
+import cl.duoc.examenes.model.OrdenExamen;
+import cl.duoc.examenes.model.TipoExamen;
+import cl.duoc.examenes.service.OrdenExamenService;
+
+@ExtendWith(MockitoExtension.class)
+class OrdenExamenControllerTest {
+
+    @Mock
+    private OrdenExamenService ordenExamenService;
+
+    @InjectMocks
+    private OrdenExamenController ordenExamenController;
+
+    private MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
+
+    private OrdenExamen ordenExamen;
+    private TipoExamen tipoExamen;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(ordenExamenController).build();
+
+        tipoExamen = new TipoExamen();
+        tipoExamen.setIdTipoExamen(1);
+        tipoExamen.setNombreExamen("Examen de sangre");
+
+        ordenExamen = new OrdenExamen();
+        ordenExamen.setIdOrdenExamen(1);
+        ordenExamen.setIdAtencion(1);
+        ordenExamen.setIdMascota(1);
+        ordenExamen.setIdVeterinario(1);
+        ordenExamen.setTipoExamen(tipoExamen);
+        ordenExamen.setFechaSolicitud(LocalDate.of(2026, 5, 9));
+        ordenExamen.setEstado("Pendiente");
+    }
+
+    @Test
+    void listar_cuandoHayOrdenes_deberiaRetornar200() throws Exception {
+        when(ordenExamenService.listar()).thenReturn(Arrays.asList(ordenExamen));
+
+        mockMvc.perform(get("/api/v1/ordenes-examen"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].estado").value("Pendiente"));
+
+        verify(ordenExamenService, times(1)).listar();
+    }
+
+    @Test
+    void listar_cuandoNoHayOrdenes_deberiaRetornar204() throws Exception {
+        when(ordenExamenService.listar()).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/ordenes-examen"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void buscarPorId_cuandoExiste_deberiaRetornar200() throws Exception {
+        when(ordenExamenService.buscarPorId(1)).thenReturn(ordenExamen);
+
+        mockMvc.perform(get("/api/v1/ordenes-examen/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("Pendiente"));
+    }
+
+    @Test
+    void buscarPorId_cuandoNoExiste_deberiaRetornar404() throws Exception {
+        when(ordenExamenService.buscarPorId(99))
+                .thenThrow(new RuntimeException("Orden de examen no encontrada con id: 99"));
+
+        mockMvc.perform(get("/api/v1/ordenes-examen/99"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void buscarPorAtencion_cuandoHayResultados_deberiaRetornar200() throws Exception {
+        when(ordenExamenService.buscarPorAtencion(1)).thenReturn(Arrays.asList(ordenExamen));
+
+        mockMvc.perform(get("/api/v1/ordenes-examen/atencion/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].idAtencion").value(1));
+    }
+
+    @Test
+    void buscarPorAtencion_cuandoNoHayResultados_deberiaRetornar204() throws Exception {
+        when(ordenExamenService.buscarPorAtencion(1)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/ordenes-examen/atencion/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void buscarPorMascota_cuandoHayResultados_deberiaRetornar200() throws Exception {
+        when(ordenExamenService.buscarPorMascota(1)).thenReturn(Arrays.asList(ordenExamen));
+
+        mockMvc.perform(get("/api/v1/ordenes-examen/mascota/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].idMascota").value(1));
+    }
+
+    @Test
+    void buscarPorMascota_cuandoNoHayResultados_deberiaRetornar204() throws Exception {
+        when(ordenExamenService.buscarPorMascota(1)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/ordenes-examen/mascota/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void buscarPorVeterinario_cuandoHayResultados_deberiaRetornar200() throws Exception {
+        when(ordenExamenService.buscarPorVeterinario(1)).thenReturn(Arrays.asList(ordenExamen));
+
+        mockMvc.perform(get("/api/v1/ordenes-examen/veterinario/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].idVeterinario").value(1));
+    }
+
+    @Test
+    void buscarPorVeterinario_cuandoNoHayResultados_deberiaRetornar204() throws Exception {
+        when(ordenExamenService.buscarPorVeterinario(1)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/ordenes-examen/veterinario/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void guardar_cuandoEsExitoso_deberiaRetornar201() throws Exception {
+        when(ordenExamenService.guardar(any(OrdenExamen.class))).thenReturn(ordenExamen);
+
+        mockMvc.perform(post("/api/v1/ordenes-examen")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ordenExamen)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.estado").value("Pendiente"));
+
+        verify(ordenExamenService, times(1)).guardar(any(OrdenExamen.class));
+    }
+
+    @Test
+    void guardar_cuandoFalla_deberiaRetornar400() throws Exception {
+        when(ordenExamenService.guardar(any(OrdenExamen.class)))
+                .thenThrow(new RuntimeException("Error al guardar"));
+
+        mockMvc.perform(post("/api/v1/ordenes-examen")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ordenExamen)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void actualizar_cuandoExiste_deberiaRetornar200() throws Exception {
+        when(ordenExamenService.actualizar(any(Integer.class), any(OrdenExamen.class))).thenReturn(ordenExamen);
+
+        mockMvc.perform(put("/api/v1/ordenes-examen/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ordenExamen)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("Pendiente"));
+
+        verify(ordenExamenService, times(1)).actualizar(any(Integer.class), any(OrdenExamen.class));
+    }
+
+    @Test
+    void actualizar_cuandoNoExiste_deberiaRetornar400() throws Exception {
+        when(ordenExamenService.actualizar(any(Integer.class), any(OrdenExamen.class)))
+                .thenThrow(new RuntimeException("Orden de examen no encontrada con id: 99"));
+
+        mockMvc.perform(put("/api/v1/ordenes-examen/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(ordenExamen)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void eliminar_cuandoExiste_deberiaRetornar204() throws Exception {
+        mockMvc.perform(delete("/api/v1/ordenes-examen/1"))
+                .andExpect(status().isNoContent());
+
+        verify(ordenExamenService, times(1)).eliminar(1);
+    }
+
+    @Test
+    void eliminar_cuandoNoExiste_deberiaRetornar404() throws Exception {
+        Mockito.doThrow(new RuntimeException("Orden de examen no encontrada con id: 99"))
+                .when(ordenExamenService).eliminar(99);
+
+        mockMvc.perform(delete("/api/v1/ordenes-examen/99"))
+                .andExpect(status().isNotFound());
+    }
+}

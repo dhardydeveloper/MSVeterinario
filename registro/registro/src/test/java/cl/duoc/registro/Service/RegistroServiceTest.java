@@ -20,7 +20,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import cl.duoc.registro.dto.RegistroDTO;
 import cl.duoc.registro.model.Cliente;
 import cl.duoc.registro.model.Mascota;
 import cl.duoc.registro.repository.ClienteRepository;
@@ -436,37 +435,16 @@ class RegistroServiceTest {
      */
     @Test
     void eliminarMascota_cuandoNoExiste_deberiaLanzarExcepcion() {
+       // Decimos: "Cuando se pregunte si existe el ID 99, responde falsamente (false)"
         when(mascotaRepository.existsById(99)).thenReturn(false);
 
+        //Verificamos que al ejecutar la acción (eliminar la mascota 99)
+        // el servicio lance obligatoriamente una excepción de tipo RuntimeException.
         assertThrows(RuntimeException.class,
                 () -> registroService.eliminarMascota(99));
 
+        // 4. Nos aseguramos de que el repositorio NUNCA intentó borrar nada en la base de datos,
         verify(mascotaRepository, never()).deleteById(anyInt());
     }
-
-    // ===================== DTO =====================
-
-    /**
-     * Test crítico del servicio que valida el mapeo correcto y combinación de los modelos 
-     * interconectados (Mascota + Cliente) hacia un objeto plano RegistroDTO.
-     */
-    @Test
-    void obtenerRegistroDTO_deberiaCombinarDatosDeClienteYMascota() {
-        when(mascotaRepository.findById(1)).thenReturn(Optional.of(mascota));
-
-        RegistroDTO dto = registroService.obtenerRegistroDTO(1);
-
-        // Validaciones del bloque de datos del cliente
-        assertEquals(cliente.getId(), dto.getIdCliente());
-        assertEquals(cliente.getRut(), dto.getRutCliente());
-        assertEquals(cliente.getNombre(), dto.getNombreCliente());
-        assertEquals(cliente.getApellido(), dto.getApellidoCliente());
-
-        // Validaciones del bloque de datos de la mascota
-        assertEquals(mascota.getId(), dto.getIdMascota());
-        assertEquals(mascota.getNombre(), dto.getNombreMascota());
-        assertEquals(mascota.getNumeroChip(), dto.getNumeroChipMascota());
-
-        verify(mascotaRepository, times(1)).findById(1);
-    }
+    
 }

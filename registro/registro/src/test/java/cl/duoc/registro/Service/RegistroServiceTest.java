@@ -435,11 +435,15 @@ class RegistroServiceTest {
      */
     @Test
     void eliminarMascota_cuandoNoExiste_deberiaLanzarExcepcion() {
+       // Decimos: "Cuando se pregunte si existe el ID 99, responde falsamente (false)"
         when(mascotaRepository.existsById(99)).thenReturn(false);
 
+        //Verificamos que al ejecutar la acción (eliminar la mascota 99)
+        // el servicio lance obligatoriamente una excepción de tipo RuntimeException.
         assertThrows(RuntimeException.class,
                 () -> registroService.eliminarMascota(99));
 
+        // 4. Nos aseguramos de que el repositorio NUNCA intentó borrar nada en la base de datos,
         verify(mascotaRepository, never()).deleteById(anyInt());
     }
     

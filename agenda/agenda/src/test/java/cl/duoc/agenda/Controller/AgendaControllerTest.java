@@ -1,4 +1,4 @@
-package cl.duoc.agenda.Controller;
+package cl.duoc.agenda.Controller; // ✅ CORREGIDO: minúscula, igual que el controller real
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -19,10 +19,10 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,7 +36,7 @@ public class AgendaControllerTest {
     @Autowired
     private MockMvc llamadaFalsa; // sirve para crear llamadas HTTP falsas
 
-    @MockBean 
+    @MockitoBean
     private AgendaService service;
 
     @Autowired
@@ -170,14 +170,18 @@ public class AgendaControllerTest {
 
     // Eliminar agenda - 204
     @Test
-    void eliminar_retorna204() throws Exception {
-        // ARRANGE: el service elimina la agenda sin retornar nada
-        doNothing().when(service).eliminar(1);
+void eliminar_retorna204() throws Exception {
 
-        // ACT + ASSERT
-        llamadaFalsa.perform(delete("/api/v1/agendas/1"))
-                .andExpect(status().isNoContent());
-    }
+    // ARRANGE: configuramos el mock para que cuando se llame eliminar(1),
+    // no haga nada (simula una eliminación exitosa sin lanzar excepción).
+    // doNothing() se usa para métodos void, ya que no retornan ningún valor.
+    doNothing().when(service).eliminar(1);
+
+    // ACT + ASSERT: realizamos una petición HTTP DELETE a /api/v1/agendas/1
+    // y verificamos que el controlador responde con 204 No Content,
+    llamadaFalsa.perform(delete("/api/v1/agendas/1"))
+            .andExpect(status().isNoContent());
+}
 
 
     // Eliminar agenda - 404 cuando no existe

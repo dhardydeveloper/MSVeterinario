@@ -11,8 +11,8 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -38,7 +38,7 @@ public class AtencionControllerTest {
     @Autowired
     private MockMvc mockMvc; // cliente HTTP simulado para llamar al controller
 
-    @MockBean
+    @MockitoBean
     private AtencionService atencionService; // service simulado (no se conecta a BD ni a otros microservicios)
 
     private ObjectMapper objectMapper;

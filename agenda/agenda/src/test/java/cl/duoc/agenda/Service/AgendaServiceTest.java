@@ -29,7 +29,7 @@ import cl.duoc.agenda.model.Agenda;
 import cl.duoc.agenda.repository.AgendaRepository;
 import cl.duoc.agenda.service.AgendaService;
 
-
+// Activa la integración de Mockito con JUnit 5 para crear mocks automáticamente
 @ExtendWith(MockitoExtension.class)
 public class AgendaServiceTest {
     
@@ -56,66 +56,80 @@ public class AgendaServiceTest {
     }
 
 
-    //Listar agendas 
+    // Listar agendas 
+    // El repositorio retorna una lista con agendas, se verifica que el servicio la devuelva completa
     @Test
     void listar_retornaListaDeAgendas() {
+
+        // ARRANGE: el repositorio simulado retorna una lista con la agenda de ejemplo
         when(agendaRepository.findAll()).thenReturn(List.of(agendaEjemplo));
 
         List<Agenda> resultado = agendaService.listar();
 
+        // ASSERT: la lista tiene un elemento y el estado es el esperado
         assertEquals(1, resultado.size());
         assertEquals("Disponible", resultado.get(0).getEstado());
+
+        // Se verifica que findAll() fue invocado exactamente una vez
         verify(agendaRepository, times(1)).findAll();
     }
 
 
-    // Buscar por Id
+    // Buscar por Id (Agenda encontrada)
+    // El repositorio retorna la agenda con el id buscado, se verifica que los datos sean correctos
     @Test
     void buscarPorId_encontrado() {
-        // ARRANGE
+        // ARRANGE: Optional.of() simula que el registro sí existe en la base de datos
         when(agendaRepository.findById(1)).thenReturn(Optional.of(agendaEjemplo));
 
-        // ACT
+        // ACT: Se busca la agenda por su id
         Agenda resultado = agendaService.buscarPorId(1);
 
-        // ASSERT
+        // ASSERT: Los datos retornados deben coincidir con los de la agenda de ejemplo
         assertEquals(1, resultado.getIdAgenda());
         assertEquals(5, resultado.getIdVeterinario());
         assertEquals("Disponible", resultado.getEstado());
     }
     
 
-    // Buscar por Id no encontrado
+    // Buscar por Id no encontrado (Agenda no encontrada)
+    // El repositorio no encuentra la agenda, se verifica que el servicio lance una excepción con el mensaje correcto
     @Test
     void buscarPorId_noEncontrado() {
-        // ARRANGE
+        // ARRANGE: Optional.empty() simula que el registro NO existe en la base de datos
         when(agendaRepository.findById(99)).thenReturn(Optional.empty());
 
-        // ACT: 
+        // ACT: assertThrows captura la excepción lanzada por el servicio sin detener el test
         RuntimeException error = assertThrows(RuntimeException.class,
                 () -> agendaService.buscarPorId(99));
 
-        // ASSERT
+        // ASSERT: El mensaje de error indica el id que no fue encontrado
         assertEquals("Agenda no encontrada con id: 99", error.getMessage());
     }
 
 
     // Buscar por veterinario
+    // El repositorio retorna las agendas del veterinario indicado, se verifica que correspondan a ese veterinario
     @Test
     void buscarPorVeterinario_retornaAgendas() {
+        // ARRANGE: El repositorio retorna la agenda asociada al veterinario con id=5
         when(agendaRepository.findByIdVeterinario(5)).thenReturn(List.of(agendaEjemplo));
 
+        // ACT: Se buscan las agendas del veterinario
         List<Agenda> resultado = agendaService.buscarPorVeterinario(5);
 
+        // ASSERT: La lista tiene un elemento y pertenece al veterinario correcto
         assertEquals(1, resultado.size());
         assertEquals(5, resultado.get(0).getIdVeterinario());
     }
 
 
     // Actualizar agenda (veterinarioDTO) Preguntar profesor
+    // Se simula la consulta al microservicio de veterinarios, la validación de cruces y el guardado
     @Test
     void actualizar_agendaValida_actualizaCorrectamente() {
-        // ARRANGE
+        
+        // ARRANGE: La agenda con id=1 existe en el repositorio
         when(agendaRepository.findById(1)).thenReturn(Optional.of(agendaEjemplo));
 
         VeterinarioDTO vetDTO = new VeterinarioDTO();
@@ -132,18 +146,21 @@ public class AgendaServiceTest {
         datosNuevos.setHoraFin(LocalTime.of(14, 0));
         datosNuevos.setEstado("Ocupada");
 
-        // ACT
+        // ACT: Se ejecuta la actualización con los nuevos datos
         Agenda resultado = agendaService.actualizar(1, datosNuevos);
 
-        // ASSERT
+        // ASSERT: El resultado no es nulo y el repositorio guardó exactamente una vez
         assertNotNull(resultado);
         verify(agendaRepository, times(1)).save(any());
     }
 
 
-    //Actualizar agenda no existente (Retorna un error 404)
+    // Actualizar agenda no existente (Retorna un error 404)
+    // El repositorio no encuentra la agenda, se verifica que se lance excepción y nunca se intente guardar
     @Test
     void actualizar_agendaNoExistente_lanzaExcepcion() {
+
+        // ARRANGE: La agenda con id=99 no existe en el repositorio
         when(agendaRepository.findById(99)).thenReturn(Optional.empty());
 
         Agenda datosNuevos = new Agenda();
@@ -153,35 +170,39 @@ public class AgendaServiceTest {
         datosNuevos.setHoraFin(LocalTime.of(14, 0));
         datosNuevos.setEstado("Ocupada");
 
+        // ACT: Debe lanzar una excepción al no encontrar la agenda
         RuntimeException error = assertThrows(RuntimeException.class,
                 () -> agendaService.actualizar(99, datosNuevos));
 
         assertEquals("Agenda no encontrada con id: 99", error.getMessage());
+
+        // El repositorio nunca debe intentar guardar si la agenda no existe
         verify(agendaRepository, never()).save(any());
     }
 
 
-
-    // eliminar
+    // Eliminar agenda existente
+    // La agenda existe, se verifica que el repositorio ejecute el borrado exactamente una vez
     @Test
     void eliminar_agendaExistente() {
-        // ARRANGE
+        // ARRANGE: existsById retorna true indicando que la agenda sí existe
         when(agendaRepository.existsById(1)).thenReturn(true);
 
-        // ACT
+        // ACT: se solicita la eliminación de la agenda
         agendaService.eliminar(1);
 
-        // ASSERT
+        // ASSERT: deleteById fue llamado exactamente una vez con el id correcto
         verify(agendaRepository, times(1)).deleteById(1);
     }
 
     //Eliminar agenda no existente (Retorna un error 404)
+    // El repositorio no encuentra la agenda, se verifica que se lance excepción y nunca se intente borrar
     @Test
     void eliminar_agendaNoExistente_lanzaExcepcion() {
-        // ARRANGE
+        // ARRANGE: existsById retorna false indicando que la agenda no existe
         when(agendaRepository.existsById(99)).thenReturn(false);
 
-        // ACT & ASSERT
+        // ACT & ASSERT: Lanza una excepción al no encontrar la agenda
         RuntimeException error = assertThrows(RuntimeException.class,
                 () -> agendaService.eliminar(99));
 

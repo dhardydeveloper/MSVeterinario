@@ -1,6 +1,7 @@
 package cl.duoc.usuario.Service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
@@ -111,8 +112,8 @@ class UsuarioServiceTest {
         Usuario resultado = usuarioService.buscarPorId(1);
 
         // Verificar resultado
-        assertNotNull(resultado);
-        assertEquals("David", resultado.getNombre());
+        assertNotNull(resultado); //onfirmamos que el servicio sí nos devolvió un objeto y no un valor nulo.
+        assertEquals("David", resultado.getNombre());//validamos que el nombre del usuario retornado sea exactamente 'David'
     }
 
     /**

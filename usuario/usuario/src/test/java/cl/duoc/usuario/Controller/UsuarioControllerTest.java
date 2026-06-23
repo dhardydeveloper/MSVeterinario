@@ -80,6 +80,7 @@ class UsuarioControllerTest {
         when(usuarioService.listar())
                 .thenReturn(List.of(usuario));
 
+// Ejecuta una petición HTTP simulada de tipo GET a la ruta especificada.
         mockMvc.perform(get("/api/v1/usuarios"))
                 .andExpect(status().isOk());
     }
@@ -89,9 +90,9 @@ class UsuarioControllerTest {
      */
     @Test
     void deberiaRetornarNoContentCuandoListaVacia() throws Exception {
-
+//Si el controlador llama al método listar() de usuarioService, retorna una lista totalmente vacía
         when(usuarioService.listar())
-                .thenReturn(Collections.emptyList());
+                .thenReturn(Collections.emptyList()); //retorna una lista completamente vacía (con cero elementos).
 
         mockMvc.perform(get("/api/v1/usuarios"))
                 .andExpect(status().isNoContent());

@@ -60,10 +60,10 @@ public class AgendaControllerTest {
     // El service retorna una lista con agendas, controlador responde un 200 con los datos
     @Test
     void listar_retorna200ConDatos() throws Exception {
-        // ARRANGE: el service retorna una lista con una agenda
+        // ARRANGE: El service retorna una lista con una agenda
         when(service.listar()).thenReturn(List.of(agendaEjemplo));
 
-        // ACT + ASSERT
+        // ACT + ASSERT: Se hace GET a /api/v1/agendas y se verifica el código 200 y los datos del JSON
         llamadaFalsa.perform(get("/api/v1/agendas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].idAgenda").value(1))
@@ -75,10 +75,10 @@ public class AgendaControllerTest {
     // El service retorna una lista vacía, el controlador responde un 204 sin cuerpo
     @Test
     void listar_retorna204CuandoVacia() throws Exception {
-        // ARRANGE: el service retorna una lista vacía
+        // ARRANGE: El service retorna una lista vacía
         when(service.listar()).thenReturn(List.of());
 
-        // ACT + ASSERT
+        // ACT + ASSERT: 204 No Content cuando no hay datos que retornar
         llamadaFalsa.perform(get("/api/v1/agendas"))
                 .andExpect(status().isNoContent());
     }
@@ -88,10 +88,10 @@ public class AgendaControllerTest {
     // El service encuentra la agenda, el controlador responde un 200 con los datos correctos
     @Test
     void buscarPorId_retorna200() throws Exception {
-        // ARRANGE: el service si recibe un 1, retorna la agenda
+        // ARRANGE: El service si recibe un id = 1, retorna la agenda
         when(service.buscarPorId(1)).thenReturn(agendaEjemplo);
 
-        // ACT + ASSERT
+        // ACT + ASSERT: Se hace GET a /api/v1/agendas/1 y se verifican los datos del JSON retornado
         llamadaFalsa.perform(get("/api/v1/agendas/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idAgenda").value(1))
@@ -119,7 +119,7 @@ public class AgendaControllerTest {
         // ARRANGE: el service guarda y retorna la agenda creada
         when(service.guardar(any(Agenda.class))).thenReturn(agendaEjemplo);
 
-        // ACT + ASSERT
+        // ACT + ASSERT: Se hace POST enviando el JSON de la agenda y se espera 201 Created
         llamadaFalsa.perform(post("/api/v1/agendas")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(agendaEjemplo)))
@@ -145,13 +145,13 @@ public class AgendaControllerTest {
 
 
     // Actualizar agenda - 200
-    // El service actualiza la agenda correctamente, el controlador responde 200 con los datos actualizados
+    // El service actualiza la agenda correctamente, el controlador responde un 200 con los datos actualizados
     @Test
     void actualizar_retorna200() throws Exception {
-        // ARRANGE: el service retorna la agenda actualizada
+        // ARRANGE: El service retorna la agenda actualizada
         when(service.actualizar(eq(1), any(Agenda.class))).thenReturn(agendaEjemplo);
 
-        // ACT + ASSERT
+        // ACT + ASSERT: Se hace PUT enviando el JSON y se espera 200 Ok con los datos actualizados
         llamadaFalsa.perform(put("/api/v1/agendas/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(agendaEjemplo)))
@@ -164,11 +164,11 @@ public class AgendaControllerTest {
     // El service lanza una excepción, el controlador responde un 400
     @Test
     void actualizar_retorna400CuandoFalla() throws Exception {
-        // ARRANGE: el service lanza una excepción si la agenda no existe o los datos son inválidos
+        // ARRANGE: El service lanza una excepción si la agenda no existe o los datos son inválidos
         when(service.actualizar(eq(99), any(Agenda.class)))
                 .thenThrow(new RuntimeException("Agenda no encontrada con id: 99"));
 
-        // ACT + ASSERT
+        // ACT + ASSERT: Se espera 400 Bad Request cuando la actualización falla
         llamadaFalsa.perform(put("/api/v1/agendas/99")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(agendaEjemplo)))

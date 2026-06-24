@@ -27,10 +27,11 @@ import cl.duoc.atencionClinica.repository.BoxRepository;
 import cl.duoc.atencionClinica.repository.TipoAtencionRepository;
 import cl.duoc.atencionClinica.service.AtencionService;
 
-
+// Activa la integración de Mockito con JUnit 5 para crear mocks automáticamente
 @ExtendWith(MockitoExtension.class)
 public class AtencionServiceTest {
 
+    // @Mock crea una versión simulada del repositorio, sin conectarse a la base de datos real
     @Mock
     private AtencionRepository atencionRepository; // repositorio simulado
 
@@ -43,6 +44,7 @@ public class AtencionServiceTest {
     @Mock
     private RestTemplate restTemplate; // se mantiene como mock por @InjectMocks, pero no se usa en estas pruebas
 
+     // @InjectMocks crea una instancia real de AtencionService e inyecta todos los mocks anteriores en ella
     @InjectMocks
     private AtencionService atencionService;
 
@@ -58,12 +60,14 @@ public class AtencionServiceTest {
         tipoAtencionEjemplo.setDescripcion("Evaluación médica general");
         tipoAtencionEjemplo.setPrecioBase(25000.0);
 
+        // Box de ejemplo
         boxEjemplo = new Box();
         boxEjemplo.setIdBox(1);
         boxEjemplo.setNombreBox("Box 1");
         boxEjemplo.setDescripcion("Box de consultas generales");
         boxEjemplo.setEstado("Disponible");
 
+        // Atención de ejemplo con todos sus datos, reutilizable en los tests
         atencionEjemplo = new Atencion();
         atencionEjemplo.setIdAtencion(1);
         atencionEjemplo.setIdCita(10);
@@ -78,13 +82,15 @@ public class AtencionServiceTest {
         atencionEjemplo.setPesoActual(12.5);
     }
 
-    // ---------- Listar ----------
+
+    // Listar atenciones
+    // El repositorio retorna una lista con atenciones, se verifica que el servicio la devuelva completa
     @Test
     void listar_retornaListaDeAtenciones() {
         // ARRANGE
         when(atencionRepository.findAll()).thenReturn(List.of(atencionEjemplo));
 
-        // ACT
+        // ACT: Llama al método del servicio que se quiere probar
         List<Atencion> resultado = atencionService.listar();
 
         // ASSERT
@@ -93,72 +99,79 @@ public class AtencionServiceTest {
         verify(atencionRepository, times(1)).findAll();
     }
 
-    // Buscar por Id 
+
+    // Buscar por Id (atención encontrada)
+    // El repositorio retorna la atención con el id buscado
     @Test
     void buscarPorId_encontrado() {
-        // ARRANGE
+        // ARRANGE: Optional.of() simula que el registro sí existe en la base de datos
         when(atencionRepository.findById(1)).thenReturn(Optional.of(atencionEjemplo));
 
-        // ACT
+        // ACT: Busca la atención por su id
         Atencion resultado = atencionService.buscarPorId(1);
 
-        // ASSERT
+        // ASSERT: Los datos retornados deben coincidir con los de la atención de ejemplo
         assertEquals(1, resultado.getIdAtencion());
         assertEquals(10, resultado.getIdCita());
         assertEquals("Otitis leve", resultado.getDiagnostico());
     }
 
-    // Buscar por Id (caso no encontrado)
+    // Buscar por Id (atención no encontrada)
+    // El repositorio no encuentra la atención, lanza una excepción con un mensaje correcto
     @Test
     void buscarPorId_noEncontrado() {
-        // ARRANGE
+        // ARRANGE: Optional.empty() simula que el registro NO existe en la base de datos
         when(atencionRepository.findById(99)).thenReturn(Optional.empty());
 
-        // ACT
+        // ACT: assertThrows captura la excepción lanzada por el servicio sin detener el test
         RuntimeException error = assertThrows(RuntimeException.class,
                 () -> atencionService.buscarPorId(99));
 
-        // ASSERT
+        // ASSERT:  El mensaje de error indica el id que no fue encontrado
         assertEquals("Atención no encontrada con id: 99", error.getMessage());
     }
 
+
     // Buscar por cita 
+    // El repositorio retorna las atenciones asociadas a una cita, se verifica que correspondan a esa cita
     @Test
     void buscarPorCita_retornaAtenciones() {
-        // ARRANGE
+        // ARRANGE: El repositorio retorna la atención asociada a la cita con id=10
         when(atencionRepository.findByIdCita(10)).thenReturn(List.of(atencionEjemplo));
 
-        // ACT
+        // ACT: Busca las atenciones por id de cita
         List<Atencion> resultado = atencionService.buscarPorCita(10);
 
-        // ASSERT
+        // ASSERT: La lista tiene un elemento y pertenece a la cita correcta
         assertEquals(1, resultado.size());
         assertEquals(10, resultado.get(0).getIdCita());
     }
 
 
     // Buscar por mascota
+    // El repositorio retorna las atenciones asociadas a una mascota, se verifica que correspondan a esa mascota
     @Test
     void buscarPorMascota_retornaAtenciones() {
-        // ARRANGE
+        // ARRANGE: El repositorio retorna la atención asociada a la mascota con id=15
         when(atencionRepository.findByIdMascota(15)).thenReturn(List.of(atencionEjemplo));
 
-        // ACT
+        // ACT: buscan las atenciones por id de mascota
         List<Atencion> resultado = atencionService.buscarPorMascota(15);
 
-        // ASSERT
+        // ASSERT: La lista tiene un elemento y pertenece a la mascota correcta
         assertEquals(1, resultado.size());
         assertEquals(15, resultado.get(0).getIdMascota());
     }
 
 
-    // Buscar por veterinario 
+    // Buscar por veterinario
+    // El repositorio retorna las atenciones del veterinario indicado 
     @Test
     void buscarPorVeterinario_retornaAtenciones() {
-        // ARRANGE
+        // ARRANGE: El repositorio retorna la atención asociada al veterinario con id=20
         when(atencionRepository.findByIdVeterinario(20)).thenReturn(List.of(atencionEjemplo));
 
-        // ACT
+        // ACT: Busca las atenciones por id de veterinario
         List<Atencion> resultado = atencionService.buscarPorVeterinario(20);
 
         // ASSERT
@@ -167,10 +180,11 @@ public class AtencionServiceTest {
     }
     
 
-    //  Actualizar (no existente)
+    // Actualizar atención no existente
+    // El repositorio no encuentra la atención, Lanza excepción y nunca se debe guardar
     @Test
     void actualizar_atencionNoExistente_lanzaExcepcion() {
-        // ARRANGE
+        // ARRANGE: La atención con id=99 no existe en el repositorio
         when(atencionRepository.findById(99)).thenReturn(Optional.empty());
 
         Atencion datosNuevos = new Atencion();
@@ -183,42 +197,47 @@ public class AtencionServiceTest {
         datosNuevos.setDiagnostico("Otitis leve");
         datosNuevos.setTratamiento("Gotas óticas");
 
-        // ACT & ASSERT
-        // buscarPorId() lanza la excepción ANTES de llegar a validarCita(),
+        // ACT & ASSERT:     BuscarPorId() lanza la excepción ANTES de llegar a validarCita(),
         // por lo tanto no depende de datos de otro microservicio.
         RuntimeException error = assertThrows(RuntimeException.class,
                 () -> atencionService.actualizar(99, datosNuevos));
 
         assertEquals("Atención no encontrada con id: 99", error.getMessage());
+
+        // El repositorio nunca debe intentar guardar si la atención no existe
         verify(atencionRepository, never()).save(any());
     }
 
 
-    // Eliminar 
+    // Eliminar atención existente
+    // La atención existe, se verifica que el repositorio ejecute el borrado exactamente una vez
     @Test
     void eliminar_atencionExistente() {
-        // ARRANGE
+        // ARRANGE: existsById retorna true indicando que la atención sí existe
         when(atencionRepository.existsById(1)).thenReturn(true);
 
-        // ACT
+        // ACT: Se solicita la eliminación de la atención
         atencionService.eliminar(1);
 
-        // ASSERT
+        // ASSERT: deleteById llamado exactamente una vez con el id correcto
         verify(atencionRepository, times(1)).deleteById(1);
     }
 
 
-    // Eliminar (no existente)
+    // Eliminar atención no existente
+    // El repositorio no encuentra la atención, lanza excepción y nunca se intenta borrar
     @Test
     void eliminar_atencionNoExistente_lanzaExcepcion() {
-        // ARRANGE
+        // ARRANGE: existsById retorna false indicando que la atención no existe
         when(atencionRepository.existsById(99)).thenReturn(false);
 
-        // ACT & ASSERT
+        // ACT & ASSERT: Lanza una excepción al no encontrar la atención 
         RuntimeException error = assertThrows(RuntimeException.class,
                 () -> atencionService.eliminar(99));
 
         assertEquals("Atención no encontrada con id: 99", error.getMessage());
+
+        // El repositorio nunca debe intentar borrar si la atención no existe
         verify(atencionRepository, never()).deleteById(any());
     }
 }

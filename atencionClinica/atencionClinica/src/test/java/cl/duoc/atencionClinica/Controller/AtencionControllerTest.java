@@ -117,7 +117,7 @@ public class AtencionControllerTest {
 
 
     // GET /api/v1/atenciones/{id} (buscarPorId encontrado)
-    // El service encuentra la atención, se verifica que el controlador responda 200 con los datos correctos
+    // El service encuentra la atención, controlador responde un 200 con los datos correctos
     @Test
     void buscarPorId_encontrado_retorna200() throws Exception {
         // ARRANGE: El service retorna la atención cuando recibe el id=1
@@ -137,7 +137,7 @@ public class AtencionControllerTest {
     // El service lanza una excepción y el controlador responde un 404
     @Test
     void buscarPorId_noEncontrado_retorna404() throws Exception {
-        // ARRANGE
+        // ARRANGE: El service lanza RuntimeException cuando el id no existe
         when(atencionService.buscarPorId(99))
                 .thenThrow(new RuntimeException("Atención no encontrada con id: 99"));
 
@@ -165,27 +165,27 @@ public class AtencionControllerTest {
     }
 
     // GET /api/v1/atenciones/cita/{idCita} (BuscarPorCita sin resultados)
-    // El service retorna lista vacía Y el controlador responde un 204
+    // El service retorna lista vacía y el controlador responde un 204
     @Test
     void buscarPorCita_sinAtenciones_retorna204() throws Exception {
         // ARRANGE
         when(atencionService.buscarPorCita(10)).thenReturn(Collections.emptyList());
 
-        // ACT & ASSERT
+        // ACT & ASSERT: 204 No Content cuando no hay atenciones para esa cita
         mockMvc.perform(get("/api/v1/atenciones/cita/10"))
                 .andExpect(status().isNoContent());
 
         verify(atencionService, times(1)).buscarPorCita(10);
     }
 
-    // GET /api/v1/atenciones/mascota/{idMascota} — buscarPorMascota 
-
+    // GET /api/v1/atenciones/mascota/{idMascota} (buscarPorMascota con resultados)
+    // El service retorna atenciones de la mascota indicada y el controlador responde un 200
     @Test
     void buscarPorMascota_retornaAtenciones() throws Exception {
         // ARRANGE
         when(atencionService.buscarPorMascota(15)).thenReturn(List.of(atencionEjemplo));
 
-        // ACT & ASSERT
+        // ACT & ASSERT: Se hace GET y se verifica que el idMascota del JSON es el correcto
         mockMvc.perform(get("/api/v1/atenciones/mascota/15"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].idMascota").value(15));
@@ -193,9 +193,11 @@ public class AtencionControllerTest {
         verify(atencionService, times(1)).buscarPorMascota(15);
     }
 
+    // GET /api/v1/atenciones/mascota/{idMascota} (buscarPorMascota sin resultados)
+    // El service retorna lista vacía y el controlador responde un 204
     @Test
     void buscarPorMascota_sinAtenciones_retorna204() throws Exception {
-        // ARRANGE
+        // ARRANGE: El service retorna lista vacía
         when(atencionService.buscarPorMascota(15)).thenReturn(Collections.emptyList());
 
         // ACT & ASSERT
@@ -206,14 +208,14 @@ public class AtencionControllerTest {
     }
 
 
-    // GET /api/v1/atenciones/veterinario/{idVeterinario} — buscarPorVeterinario 
-
+    // GET /api/v1/atenciones/veterinario/{idVeterinario} (buscarPorVeterinario con resultados)
+    // El service retorna atenciones del veterinario indicado y el controlador responde un 200
     @Test
     void buscarPorVeterinario_retornaAtenciones() throws Exception {
         // ARRANGE
         when(atencionService.buscarPorVeterinario(20)).thenReturn(List.of(atencionEjemplo));
 
-        // ACT & ASSERT
+        // ACT & ASSERT: Se hace GET y se verifica que el idVeterinario del JSON es el correcto
         mockMvc.perform(get("/api/v1/atenciones/veterinario/20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].idVeterinario").value(20));
@@ -221,6 +223,8 @@ public class AtencionControllerTest {
         verify(atencionService, times(1)).buscarPorVeterinario(20);
     }
 
+    // GET /api/v1/atenciones/veterinario/{idVeterinario} (buscar por veterinario sin resultados)
+    // El service retorna lista vacía y el controlador responde un 204
     @Test
     void buscarPorVeterinario_sinAtenciones_retorna204() throws Exception {
         // ARRANGE
@@ -238,10 +242,10 @@ public class AtencionControllerTest {
     // El service guarda la atención correctamente y el controlador responde 201 con los datos creados
     @Test
     void guardar_datosValidos_retorna201() throws Exception {
-        // ARRANGE
+        // ARRANGE: 
         when(atencionService.guardar(any(Atencion.class))).thenReturn(atencionEjemplo);
 
-        // ACT & ASSERT
+        // ACT & ASSERT: Se hace POST enviando el JSON (201 Created con los datos guardados) 
         mockMvc.perform(post("/api/v1/atenciones")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(atencionEjemplo))) 
@@ -253,6 +257,8 @@ public class AtencionControllerTest {
         verify(atencionService, times(1)).guardar(any(Atencion.class));
     }
 
+    // POST /api/v1/atenciones (guardar con datos inválidos)
+    // El service lanza una excepción por datos inválidos y el controlador responde un 400
     @Test
     void guardar_datosInvalidos_retorna400() throws Exception {
         // ARRANGE
@@ -260,7 +266,7 @@ public class AtencionControllerTest {
         when(atencionService.guardar(any(Atencion.class)))
                 .thenThrow(new RuntimeException("El diagnóstico es obligatorio"));
 
-        // ACT & ASSERT
+        // ACT & ASSERT: 400 Bad Request cuando los datos enviados son inválidos
         mockMvc.perform(post("/api/v1/atenciones")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(atencionEjemplo)))
@@ -274,11 +280,12 @@ public class AtencionControllerTest {
     // El service actualiza la atención correctamente y el controlador responde 200 con los datos actualizados
     @Test
     void actualizar_atencionExistente_retorna200() throws Exception {
-        // ARRANGE
+        // ARRANGE: Modifica el diagnóstico y el service retorna la atención actualizada
+        // eq(1) exige que el id sea exactamente 1; any(Atencion.class) acepta cualquier objeto Atencion
         atencionEjemplo.setDiagnostico("Otitis moderada");
         when(atencionService.actualizar(eq(1), any(Atencion.class))).thenReturn(atencionEjemplo);
 
-        // ACT & ASSERT
+        // ACT & ASSERT: Se hace PUT enviando el JSON y se verifica 200 Ok con el diagnóstico actualizado
         mockMvc.perform(put("/api/v1/atenciones/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(atencionEjemplo)))
@@ -289,10 +296,11 @@ public class AtencionControllerTest {
         verify(atencionService, times(1)).actualizar(eq(1), any(Atencion.class));
     }
 
+    // PUT /api/v1/atenciones/{id} (actualizar atención no existente)
+    // El service lanza una excepción y el controlador responde un 400
     @Test
     void actualizar_atencionNoExistente_retorna400() throws Exception {
-        // ARRANGE
-        // Simula el mismo error que lanza buscarPorId() dentro del service cuando no existe
+        // ARRANGE: Simula el mismo error que lanza buscar Por Id dentro del service cuando no existe
         when(atencionService.actualizar(eq(99), any(Atencion.class)))
                 .thenThrow(new RuntimeException("Atención no encontrada con id: 99"));
 
@@ -313,7 +321,7 @@ public class AtencionControllerTest {
         // ARRANGE: doNothing() se usa para métodos void, simula que eliminar(1) se ejecuta sin errores
         doNothing().when(atencionService).eliminar(1);
 
-        // ACT & ASSERT
+        // ACT & ASSERT: Se hace DELETE (204 No Content)
         mockMvc.perform(delete("/api/v1/atenciones/1"))
                 .andExpect(status().isNoContent());
 
@@ -324,11 +332,12 @@ public class AtencionControllerTest {
     // El service lanza una excepción y el controlador responde un 404
     @Test
     void eliminar_atencionNoExistente_retorna404() throws Exception {
-        // ARRANGE
+        // ARRANGE: doThrow() lanza una excepción cuando se intenta eliminar un id inexistente
+        // Se usa doThrow en lugar de when() porque eliminar() es un método void
         doThrow(new RuntimeException("Atención no encontrada con id: 99"))
                 .when(atencionService).eliminar(99);
 
-        // ACT & ASSERT
+        // ACT & ASSERT: 404 Not Found cuando la atención a eliminar no existe
         mockMvc.perform(delete("/api/v1/atenciones/99"))
                 .andExpect(status().isNotFound());
 
